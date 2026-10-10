@@ -19,39 +19,40 @@
 | `work/` | 530 MB | ❌ 忽略 | 工作区，`seed_work.py` 可从 `data/` 重建 |
 | `_out_shape_check.txt` 等运行报告 | 小 | ❌ 忽略 | 每次跑都会变 |
 
-**总跟踪体积约 6 MB / 约 100 个文件**，克隆很快。
+**总跟踪体积约 5 MB / 104 个文件**，克隆很快。
 
 > 如果你**确实**想把大目录也放进版本库，请用 Git LFS，不要直接 `git add`：
 > ```bash
 > git lfs track "*.wav" "*.safetensors" "*.th" "*.dll" "*.pt"
 > ```
-> 但 7.5 GB 的 LFS 配额在 GitHub 免费账户上是放不下的，网盘才是对的方案。
+> 但免费账户的 LFS 配额（1 GB 存储 / 1 GB 月流量）放不下这 8 GB，
+> 网盘才是对的方案。
+
+> **关于 GitHub Release 能不能放整合包**：单文件上限是 2 GiB，整合包里最大的
+> 单文件是 913 MB（`torch_cuda.dll`），所以**技术上拆成分卷可以传**。但不建议：
+> Release 是用来分发软件版本的，把 8 GB 训练环境镜像流量挂上去，既容易触到
+> 合理使用政策，也让仓库变成一个不好维护的存储桶。Release 的正文里放网盘
+> 链接即可。
 
 ---
 
 ## 二、发布前必须补的占位符
 
 仓库名已定为 **`music_to_playable_piano_score`**、Owner 为 **`MoveBricksWorker`**，
-下列两项已完成：
+下列项已完成：
 
+- [x] ~~README 里的网盘链接~~ —— 已填夸克网盘链接与提取码 `Wuqn`
+      （`README.md` 的「方式 A：用整合包」一节）。
 - [x] ~~README 顶部的 CI 徽章~~ —— 已填 `MoveBricksWorker`（徽章 URL 出现两次）。
 - [x] ~~`pyproject.toml` 的 name~~ —— 已改为 `music-to-playable-piano-score`。
 
+- [x] ~~**git 身份**~~ —— 已配 `MoveBricksWorker <2673992653@qq.com>`（仓库级）。
+      换机器或换仓库时需重配，见第三节：不配则 `git commit` 直接失败。
+
 仍需处理：
 
-- [ ] **README 里的网盘链接**：搜索 `你的网盘链接` 和 `<待填>`，换成真实地址与提取码。
-      位置在 [README.md](../README.md) 的「方式 A：用整合包」一节，
-      那里还有一条 `<!-- TODO(发布前) -->` 注释，改完请把注释整条删掉。
-      **留占位符不影响推送**，之后改一行就行。
 - [ ] **LICENSE 里的版权人**：把 `<你的名字或 GitHub ID>` 换成你希望公开显示的名字。
 - [ ] 检查 `docs/images/victim-page2.png` 是否愿意公开（那是样例曲的输出）。
-- [ ] **git 身份**：本机未配置，不配则 `git commit` 直接失败（见第三节）。
-      要让这个仓库专用某身份，去掉 `--global`：
-
-      ```bash
-      git config user.name "MoveBricksWorker"
-      git config user.email "<你的 GitHub 邮箱>"
-      ```
 
 自检命令：
 

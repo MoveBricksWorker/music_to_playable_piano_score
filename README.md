@@ -89,18 +89,18 @@ F 小调 2/4，右手三连音十六分，左手伴奏。可以看到成品仍�
 拷到别的机器上**不需要网络、不需要装任何东西**。
 
 ```
-整合包  约 7.5 GB
-├─ python/   6.4 GB   自带解释器（torch 2.6.0+cu124 等）
-├─ models/   570 MB   模型权重（SheetSage2 + demucs，附 SHA-256 清单）
-├─ data/     362 MB   四首输入（MP3 + 分轨 + 转谱 MIDI + SheetSage2 标签）
-├─ work/     530 MB   工作区（seed_work.py 从 data/ 铺出来）
-└─ out/              成品
+整合包  下载约 8 GB
+├─ python/         自带解释器（约 6.4 GB，含 torch 2.6.0+cu124）
+├─ models/         模型权重 570 MB（SheetSage2 + demucs，附 SHA-256 清单）
+├─ data/           四首输入 362 MB（MP3 + 分轨 + 转谱 MIDI + SheetSage2 标签）
+├─ work/           工作区 530 MB（seed_work.py 从 data/ 铺出来）
+└─ out/            成品
 ```
 
-> **下载**：<https://你的网盘链接> 　提取码：`<待填>`
+> **下载**：[夸克网盘](https://pan.quark.cn/s/3bef4e0fd86c?pwd=Wuqn) 　提取码：`Wuqn`
 >
-> <!-- TODO(发布前)：把上面换成真实网盘链接与提取码，然后删掉这一行注释。
->      如果按"代码包 / 权重包"分开上传，把两个链接都写在这里。 -->
+> 整合包根目录下有一份 `先读我.txt`，解压后先看它——里面写了**不要用
+> `python\Scripts\*.exe`** 这条关键前提，以及出问题时该跑哪个诊断脚本。
 
 ```bat
 :: 出谱：用自带输入与自带标签，离线，四首约 1 分钟
