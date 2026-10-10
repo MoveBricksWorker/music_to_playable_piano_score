@@ -1,0 +1,61 @@
+{
+  "song": "collapse",
+  "ticks_per_beat": 12,
+  "time_signature": "4/4",
+  "bars": 86,
+  "tempo_bpm": 77.92,
+  "first_beat_seconds": 0.0,
+  "phase": 0,
+  "arrangement_source": "out/_arrangements/collapse.txt",
+  "right_notes": 1007,
+  "left_notes": 328,
+  "measures": 87,
+  "ties": 0,
+  "measure_clamp": {
+    "rebuilt_measures": 162,
+    "trimmed": 38,
+    "dropped": 0,
+    "leading_rests": 24,
+    "pickup_marked_implicit": 0
+  },
+  "duration_regularize": {
+    "regularized": 1113,
+    "bars_touched": 162
+  },
+  "duration_normalize": {
+    "snapped": 21,
+    "merged": 0,
+    "dropped": 0
+  },
+  "tempo_fix": {
+    "placed": 2,
+    "removed": 2,
+    "bpm": 77.9
+  },
+  "quantizer": {
+    "kind": "dual_lattice",
+    "cost_normalization": "density",
+    "switch_margin": 0.01,
+    "snap_policy": "family",
+    "piano": {
+      "lattice": "mixed",
+      "merged": 489,
+      "duple_share": 0.435,
+      "max_shift_ticks": 1.479
+    },
+    "melody": {
+      "lattice": "duple",
+      "merged": 0,
+      "duple_share": 1.0,
+      "max_shift_ticks": 0.003
+    }
+  },
+  "warnings": [
+    "强拍间距不均匀（{4: 84, 2: 2, 1: 1}）：取众数 4 拍/小节",
+    "8 onset(s) have more than 5 notes sounding at once"
+  ],
+  "written": {
+    "musicxml": "out/collapse/collapse.musicxml",
+    "midi": "out/collapse/collapse.mid"
+  }
+}

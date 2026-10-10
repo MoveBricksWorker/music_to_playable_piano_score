@@ -1,0 +1,42 @@
+# ---------------------------------------------------------------------------
+# .gitattributes — 让中文文本与二进制样例的 diff / 换行行为可预期
+#
+# 本项目所有源码与文档都是 UTF-8。Windows 上的编辑器默认可能是 GBK，
+# 那会把中文写成乱码（项目早期踩过一次，见 README「已知缺陷」）。
+# 这里显式声明，配合 .editorconfig 一起用。
+# ---------------------------------------------------------------------------
+
+* text=auto eol=lf
+
+# ---- 源码与文档：UTF-8 文本，diff 有意义 ---------------------------------
+*.py      text diff=python
+*.md      text
+*.txt     text
+*.toml    text
+*.json    text
+*.cfg     text
+*.yml     text
+*.yaml    text
+.gitignore    text
+.gitattributes text
+.editorconfig  text
+
+# ---- Windows 批处理：必须保持 CRLF，cmd.exe 对 LF 结尾不友好 ------------
+# 另外 run.bat 里明确要求**纯 ASCII**：cmd 用 OEM 代码页（简中为 GBK）
+# 解码 .bat，UTF-8 的中文注释会被当成命令。
+*.bat     text eol=crlf
+
+# ---- 样例成品：二进制，不做 diff / 不参与合并 ----------------------------
+*.pdf     binary
+*.mid     binary
+*.midi    binary
+*.mp3     binary
+*.wav     binary
+
+# ---- MusicXML 是 XML 文本，保留可读的 diff -------------------------------
+*.musicxml text
+*.xml      text
+
+# ---- 一次性大文件：GitHub 的语言统计里不显示 -----------------------------
+/python/**  linguist-vendored
+/models/**  linguist-vendored

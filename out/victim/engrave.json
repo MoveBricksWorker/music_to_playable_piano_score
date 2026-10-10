@@ -1,0 +1,61 @@
+{
+  "song": "victim",
+  "ticks_per_beat": 12,
+  "time_signature": "2/4",
+  "bars": 149,
+  "tempo_bpm": 76.92,
+  "first_beat_seconds": 0.01,
+  "phase": 0,
+  "arrangement_source": "out/_arrangements/victim.txt",
+  "right_notes": 1145,
+  "left_notes": 698,
+  "measures": 149,
+  "ties": 0,
+  "measure_clamp": {
+    "rebuilt_measures": 282,
+    "trimmed": 19,
+    "dropped": 0,
+    "leading_rests": 5,
+    "pickup_marked_implicit": 0
+  },
+  "duration_regularize": {
+    "regularized": 1502,
+    "bars_touched": 282
+  },
+  "duration_normalize": {
+    "snapped": 2,
+    "merged": 0,
+    "dropped": 0
+  },
+  "tempo_fix": {
+    "placed": 2,
+    "removed": 2,
+    "bpm": 76.9
+  },
+  "quantizer": {
+    "kind": "dual_lattice",
+    "cost_normalization": "density",
+    "switch_margin": 0.01,
+    "snap_policy": "family",
+    "piano": {
+      "lattice": "mixed",
+      "merged": 699,
+      "duple_share": 0.04,
+      "max_shift_ticks": 0.992
+    },
+    "melody": {
+      "lattice": "duple",
+      "merged": 0,
+      "duple_share": 1.0,
+      "max_shift_ticks": 0.003
+    }
+  },
+  "warnings": [
+    "强拍间距不均匀（{2: 148, 0: 1}）：取众数 2 拍/小节",
+    "3 onset(s) have more than 5 notes sounding at once"
+  ],
+  "written": {
+    "musicxml": "out/victim/victim.musicxml",
+    "midi": "out/victim/victim.mid"
+  }
+}

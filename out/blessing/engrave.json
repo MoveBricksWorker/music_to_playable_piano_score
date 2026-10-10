@@ -1,0 +1,61 @@
+{
+  "song": "blessing",
+  "ticks_per_beat": 12,
+  "time_signature": "3/4",
+  "bars": 212,
+  "tempo_bpm": 142.86,
+  "first_beat_seconds": 0.01,
+  "phase": 0,
+  "arrangement_source": "out/_arrangements/blessing.txt",
+  "right_notes": 1342,
+  "left_notes": 472,
+  "measures": 212,
+  "ties": 0,
+  "measure_clamp": {
+    "rebuilt_measures": 344,
+    "trimmed": 52,
+    "dropped": 0,
+    "leading_rests": 45,
+    "pickup_marked_implicit": 0
+  },
+  "duration_regularize": {
+    "regularized": 1413,
+    "bars_touched": 344
+  },
+  "duration_normalize": {
+    "snapped": 13,
+    "merged": 0,
+    "dropped": 0
+  },
+  "tempo_fix": {
+    "placed": 2,
+    "removed": 2,
+    "bpm": 142.9
+  },
+  "quantizer": {
+    "kind": "dual_lattice",
+    "cost_normalization": "density",
+    "switch_margin": 0.01,
+    "snap_policy": "family",
+    "piano": {
+      "lattice": "mixed",
+      "merged": 803,
+      "duple_share": 0.731,
+      "max_shift_ticks": 1.488
+    },
+    "melody": {
+      "lattice": "duple",
+      "merged": 0,
+      "duple_share": 1.0,
+      "max_shift_ticks": 0.006
+    }
+  },
+  "warnings": [
+    "强拍间距不均匀（{3: 208, 4: 3, 1: 1}）：取众数 3 拍/小节",
+    "2 onset(s) have more than 5 notes sounding at once"
+  ],
+  "written": {
+    "musicxml": "out/blessing/blessing.musicxml",
+    "midi": "out/blessing/blessing.mid"
+  }
+}

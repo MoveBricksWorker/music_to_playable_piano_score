@@ -1,0 +1,73 @@
+[project]
+name = "music-to-playable-piano-score"
+version = "1.0.0"
+description = "音频 → 可弹钢琴谱（MusicXML / MIDI / PDF）的完整管线"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+keywords = [
+    "music-transcription",
+    "piano",
+    "musicxml",
+    "audio-to-score",
+    "quantization",
+    "demucs",
+    "transkun",
+    "music21",
+]
+classifiers = [
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Multimedia :: Sound/Audio :: Analysis",
+    "Topic :: Multimedia :: Sound/Audio :: Conversion",
+]
+
+# 注意：本文件**不参与安装**（没有 [build-system]，也不是一个可导入的分发包）。
+# 它在这里的作用是声明依赖、给 GitHub 显示语言与元数据、以及给工具读。
+# 真正建环境请用 `python install_env.py`（它把版本钉死并走 PyTorch 官方源）。
+dependencies = [
+    "music21>=9.0",
+    "pretty_midi>=0.2.10",
+    "numpy",
+    "scipy",
+    "soundfile",
+    "librosa",
+    "soxr",
+    "pydub",
+    "torch>=2.0",
+    "torchaudio",
+    "demucs>=4.0",
+    "transkun",
+]
+
+[project.optional-dependencies]
+# 只跑验收 / 回归闸门所需的最小集合。CI 用这个，装得很快、不需要 GPU。
+ci = [
+    "music21>=9.0",
+    "pretty_midi>=0.2.10",
+    "numpy",
+]
+# 重新推理 SheetSage2 才需要（与主管线的版本容易冲突，建议单独环境）。
+sheetsage2 = ["transformers>=4.40"]
+# 全部装齐（等价于 install_env.py 的清单，但不钉版本）。
+full = [
+    "music21>=9.0",
+    "pretty_midi>=0.2.10",
+    "numpy",
+    "scipy",
+    "soundfile",
+    "librosa",
+    "soxr",
+    "pydub",
+    "torch>=2.0",
+    "torchaudio",
+    "demucs>=4.0",
+    "transkun",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+# 回归闸门是一个脚本（tests/regression.py），不是 pytest 用例；
+# 保留这段是为了以后加真正的单元测试时不必再改配置。
+addopts = "-q"

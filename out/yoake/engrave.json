@@ -1,0 +1,61 @@
+{
+  "song": "yoake",
+  "ticks_per_beat": 12,
+  "time_signature": "4/4",
+  "bars": 74,
+  "tempo_bpm": 89.55,
+  "first_beat_seconds": 0.02,
+  "phase": 0,
+  "arrangement_source": "out/_arrangements/yoake.txt",
+  "right_notes": 1573,
+  "left_notes": 402,
+  "measures": 74,
+  "ties": 0,
+  "measure_clamp": {
+    "rebuilt_measures": 146,
+    "trimmed": 11,
+    "dropped": 0,
+    "leading_rests": 4,
+    "pickup_marked_implicit": 0
+  },
+  "duration_regularize": {
+    "regularized": 1393,
+    "bars_touched": 146
+  },
+  "duration_normalize": {
+    "snapped": 6,
+    "merged": 0,
+    "dropped": 0
+  },
+  "tempo_fix": {
+    "placed": 2,
+    "removed": 2,
+    "bpm": 89.6
+  },
+  "quantizer": {
+    "kind": "dual_lattice",
+    "cost_normalization": "density",
+    "switch_margin": 0.01,
+    "snap_policy": "family",
+    "piano": {
+      "lattice": "mixed",
+      "merged": 1024,
+      "duple_share": 0.532,
+      "max_shift_ticks": 1.45
+    },
+    "melody": {
+      "lattice": "duple",
+      "merged": 0,
+      "duple_share": 1.0,
+      "max_shift_ticks": 0.004
+    }
+  },
+  "warnings": [
+    "强拍间距不均匀（{4: 73, 1: 1}）：取众数 4 拍/小节",
+    "33 onset(s) have more than 5 notes sounding at once"
+  ],
+  "written": {
+    "musicxml": "out/yoake/yoake.musicxml",
+    "midi": "out/yoake/yoake.mid"
+  }
+}

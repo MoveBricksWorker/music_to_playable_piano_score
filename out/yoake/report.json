@@ -1,0 +1,23 @@
+{
+  "notes": 1975,
+  "onsets": 1244,
+  "bars": 74,
+  "right_notes": 1573,
+  "left_notes": 402,
+  "written_elements": 0,
+  "max_span": 19,
+  "wide_chords": 0,
+  "max_simultaneous": 7,
+  "average_simultaneous": 3.0035,
+  "crowded_onsets": 33,
+  "hand_crossings": 0,
+  "left_above_middle_c": 0,
+  "notes_per_second": 0.0,
+  "melody_kept": 1.0,
+  "melody_missing": 0,
+  "melody_octave_shifted": 0,
+  "invented": 32,
+  "warnings": [
+    "33 onset(s) have more than 5 notes sounding at once"
+  ]
+}

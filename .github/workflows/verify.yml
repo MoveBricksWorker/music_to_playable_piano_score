@@ -1,0 +1,73 @@
+name: verify
+
+# 这个 workflow 只做一件事：守住那几条"已经被验证过"的硬指标不退化。
+#
+# 它**不**跑完整管线（那需要 6.4 GB 的解释器、570 MB 的模型权重和 GPU，
+# 都在网盘上的整合包里）。它能跑的是：
+#   1. 检查器自证 —— 构造已知谱面，确认 check_shapes 会抓到该抓的问题；
+#   2. 回归闸门 —— 对仓库里 `out/` 的四首样例断言：宽和弦 0、拥挤起音 0、
+#      R1 = 0、编排里的起音一个都不丢、谱面带调号。
+#
+# 为什么在 ubuntu 上跑：这套代码只在 Windows 上被验证过，
+# 让 CI 在 Linux 上过一遍是最省事的跨平台冒烟测试。
+
+on:
+  push:
+    branches: ["main", "master"]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.12"]
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: 安装最小依赖（不需要 torch）
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install "music21>=9.0" "pretty_midi>=0.2.10" "numpy"
+
+      - name: 检查器自证
+        run: python tests/regression.py --self-check
+
+      - name: 回归闸门（对 out/ 的四首样例）
+        run: python tests/regression.py --verbose
+
+      - name: 谱面结构体检
+        run: python tools/check_structure.py
+
+      - name: 确认仓库里没有混进整合包大目录
+        run: |
+          set -e
+          for d in python models data work; do
+            if git ls-files --error-unmatch "$d" >/dev/null 2>&1; then
+              echo "::error::$d/ 被 git 跟踪了——它应该在 .gitignore 里，走网盘分发"
+              exit 1
+            fi
+          done
+          echo "OK：python/ models/ data/ work/ 均未被跟踪"
+
+      - name: 确认没有超过 50 MB 的跟踪文件
+        run: |
+          set -e
+          big=$(git ls-files -z | xargs -0 -I{} du -k "{}" 2>/dev/null | awk '$1 > 51200 {print $1" KB  "$2}')
+          if [ -n "$big" ]; then
+            echo "::error::发现超过 50 MB 的跟踪文件，GitHub 会警告甚至拒绝："
+            echo "$big"
+            exit 1
+          fi
+          echo "OK：没有超过 50 MB 的跟踪文件"
