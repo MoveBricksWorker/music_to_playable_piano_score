@@ -41,6 +41,21 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install "music21>=9.0" "pretty_midi>=0.2.10" "numpy"
 
+      - name: 确认验收所需的产物都在（否则闸门会假绿）
+        run: |
+          set -e
+          missing=0
+          for s in victim yoake collapse blessing; do
+            for f in "out/$s/$s.musicxml" "out/$s/arrangement.txt"; do
+              if [ ! -f "$f" ]; then
+                echo "::error::缺 $f —— 它必须进版本库，否则回归闸门无从验收"
+                missing=1
+              fi
+            done
+          done
+          [ "$missing" -eq 0 ]
+          echo "OK：四首样例的 musicxml 与 arrangement.txt 都在"
+
       - name: 检查器自证
         run: python tests/regression.py --self-check
 
