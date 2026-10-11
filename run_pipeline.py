@@ -354,9 +354,24 @@ def stage_sheetsage2(song: str, work: Path, *, force: bool, render: bool,
     labels = work / "sheetsage2" / song
     needed = ["beat.lab", "downbeat.lab", "key.lab", "chord.lab", "melody_vocal.mid"]
     have_all = all((labels / name).is_file() for name in needed)
-    if have_all and not force:
+
+    # "文件齐"不等于"标签可信"。`pipeline/make_labels.py` 写出的文件名与 SheetSage2
+    # **完全同名**，若只看文件是否存在，替代标签会被当成"自带标签"而**静默跳过真模型**。
+    # 实测有一首曲子因此长期用着替代标签：调号错、旋律音域跨 5 个八度、和弦为空，
+    # 而管线和日志都不提示。这里按 `.labels_by` 标记区分。
+    made_by = None
+    marker = labels / ".labels_by"
+    if marker.is_file():
+        made_by = marker.read_text(encoding="utf-8").strip() or None
+    substitute = made_by not in (None, "sheetsage2")
+
+    if have_all and not force and not substitute:
         print(f"    自带标签齐备（{', '.join(needed)}），跳过推理")
         return labels
+
+    if have_all and substitute:
+        print(f"    注意：现有标签由 `{made_by}` 生成，**不是 SheetSage2**"
+              f"——改用真模型重新推理")
 
     audio = work / "audio" / f"{song}.mp3"
     if not audio.is_file():

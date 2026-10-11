@@ -337,6 +337,17 @@ def main() -> int:
         path = labels / name
         mark = f"{path.stat().st_size:>8d} B" if path.is_file() else "   缺失"
         _log(f"  {name:18s} {mark}")
+
+    # **标记这些标签不是 SheetSage2 产的。**
+    #
+    # `run_pipeline.stage_sheetsage2` 的"标签齐备就跳过推理"只检查文件名是否存在。
+    # 本脚本写出的文件名与 SheetSage2 **完全同名**，于是被它当成"自带标签"、
+    # 静默跳过真模型 —— 实测有一首曲子因此一直用着这里的替代标签（调号错、
+    # 旋律音域跨 5 个八度、没有和弦），而管线和日志都不会提示。
+    # 有了这个标记，第 ④ 阶段就知道"这些标签是替代品"，可以按需重跑真模型。
+    (labels / ".labels_by").write_text("make_labels", encoding="utf-8")
+    _log("已标记 .labels_by=make_labels（替代方案，非 SheetSage2）")
+
     print()
     _log(f"下一步：run.bat {args.song} --from arrange")
     return 0

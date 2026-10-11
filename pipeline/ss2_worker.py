@@ -135,8 +135,14 @@ def main() -> int:
     #   vocal        —— 旋律是独立的人声，与钢琴轨同刻同音高的音确实是串音，该删。
     #   instrumental —— 旋律本来就是这件乐器自己弹的（独奏曲），"串音删除"会把
     #                   真实音符删掉。实测肖邦练习曲上会删掉 272 个音（12%）。
-    marker = labels / ".melody_source"
-    marker.write_text(melody_used or "melody_vocal.mid", encoding="utf-8")
+    #
+    # 同时写下 `.labels_by`：这是个"这些标签是真 SheetSage2 产出的"标记。
+    # `run_pipeline.stage_sheetsage2` 靠它区分"自带标签"与"替代方案生成的标签"，
+    # 否则 `pipeline/make_labels.py` 写出的同名文件会让第 ④ 阶段误判为"标签齐备"
+    # 而**静默跳过 SheetSage2** —— 实测就是这么让一首曲子一直用着假旋律的。
+    (labels / ".melody_source").write_text(melody_used or "melody_vocal.mid",
+                                            encoding="utf-8")
+    (labels / ".labels_by").write_text("sheetsage2", encoding="utf-8")
 
     print(f"  [ss2] 标签齐备：{', '.join(REQUIRED)}", flush=True)
     if melody_used:
@@ -147,7 +153,7 @@ def main() -> int:
         # 只留管线要的：其余产物（events.json / tokens.txt / abc 谱面 …）会让人误以为
         # 那些也是管线输入，而且体积不小。
         for path in labels.iterdir():
-            if path.is_file() and path.name not in REQUIRED + (".melody_source",):
+            if path.is_file() and path.name not in REQUIRED + (".melody_source", ".labels_by"):
                 path.unlink(missing_ok=True)
     return 0
 
