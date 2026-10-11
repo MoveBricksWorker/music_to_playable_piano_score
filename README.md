@@ -307,6 +307,60 @@ SheetSage2 是 lead-sheet 模型，旋律头是**每个十六分音符一个类�
 | collapse | F minor | −4 | 629 → **532** |
 | blessing | E minor | +1 | 256 → 256 |
 
+### 🔴 第 ④ 阶段对**新曲子**不可用（自带标签只覆盖四首样例）
+
+`data/sheetsage2/` 里预置了 blessing / collapse / yoake / victim 四首的标签，
+所以那四首的第 ④ 阶段走"直接吃现成的"快路，**从不真正加载 SheetSage2**。
+换任何别的曲子，标签缺失，就会真的去推理——然后撞上两件事：
+
+**一、模型在这个解释器上加载不了。** 包内 `transformers` 是 5.6.1，而 SheetSage2
+的远程代码是照着 4.45 写的。已知 4 处 API 漂移，第一处就致命：
+
+```python
+# models/hf/.../modeling_sheetsage2.py:149
+self.decoder = BartDecoder(dc, embed_tokens=self.token_embedding)
+# 5.x: BartDecoder.__init__(self, config) —— 没有 embed_tokens 这个参数
+```
+
+```
+TypeError: BartDecoder.__init__() got an unexpected keyword argument 'embed_tokens'
+```
+
+另外三处：`_tied_weights_keys` 从 `list` 变成 `dict`；`tie_weights()` 多了
+`recompute_mapping` / `missing_keys` 两个参数；它自己的 `from_pretrained` 覆写
+要求"零缺失键"，而 5.x 会把被别名掉的绑定权重报成缺失。
+
+原项目用独立的 `.venv-ss2`（transformers 4.45）隔离这件事，**精简版没有这个环境**。
+
+**二、`pipeline/run_sheetsage2.py` 原来是写死四首的。** 它遍历一张硬编码的
+`TRACKS` 表，遇到表外的曲名直接 `continue`，循环体一次都不执行，然后 `return 0`
+——**什么都没干，却报成功**。真正发现问题的是 `run_pipeline` 事后那句"产出不全"，
+指向的是错误的方向。此外它的输出目录还和管线读的位置不一致。
+
+这两条都已修（脚本支持任意曲名、输出到正确位置、失败返回非零、报错分成人话），
+**但第一条修不了**——除非改 `models/` 缓存里的那份代码，且必须先验证权重绑定方向
+（写反了模型照样能加载、照样吐音符，但输出全是垃圾）。
+
+在修好之前，给新曲子出谱的办法是**自己准备标签**：往
+`work/sheetsage2/<曲名>/` 放这 5 个文件
+
+```
+beat.lab          每行一个拍点时间（秒）
+downbeat.lab      每行一个强拍时间（秒）
+key.lab           每行 "起始秒 <TAB> 结束秒 <TAB> 调名"，如 0.01  149.74  F:minor
+chord.lab         调号/和弦标签（管线只做存在性检查）
+melody_vocal.mid  人声旋律（单音 MIDI）
+chords.mid        和弦素材 MIDI（空文件也可以，但必须存在）
+```
+
+拍点/调号可以用 librosa 顶（见 `work/_pragmatism_labels.py`）。
+**但要注意**：用"转谱每刻的最高音"冒充旋律会让 `dedupe_piano` 把大部分钢琴音
+当成人声串音删掉（实测某首电子乐 912 个音被删掉 645 个），并且被保护的音会让
+可弹性修正失效。所以这条路能出谱，质量明显低于四首样例。
+
+> 这次是作者自己踩的：改了 `run_sheetsage2.py` 却从没运行过它，
+> 直到有人拿新曲子试跑才炸出来。
+
 ### 🟠 临时记号仍然偏多（下一个该修的）
 
 修完调号后，victim 里写出的 695 个临时记号中，**604 个的音级本来就在调号里**，

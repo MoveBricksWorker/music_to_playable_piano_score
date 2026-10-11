@@ -240,12 +240,70 @@ def stage_transkun(song: str, work: Path, *, force: bool, device: str) -> Path:
 # --------------------------------------------------------------------------- #
 # ④ SheetSage2
 # --------------------------------------------------------------------------- #
+#: 这个整合包里的解释器能装到的、**用不了**的 transformers 大版本。
+#: SheetSage2 的远程代码写于 4.45，5.x 删掉了它依赖的 `BartDecoder(embed_tokens=...)`
+#: 之类接口，加载时直接 `TypeError`。
+SHEETSAGE2_MAX_TRANSFORMERS = 5
+
+
+def _sheetsage2_preflight() -> str | None:
+    """跑 SheetSage2 之前先把"注定失败"的情况翻译成人话。返回 None 表示可以试。
+
+    为什么要这一步：**这个整合包里的 SheetSage2 是跑不起来的**（见下面的版本检查）。
+    但它只在"标签缺失"时才被触发 —— 也就是只有换新曲子的人会撞上。
+    早先撞上时抛的是 `transformers` 内部的 `TypeError`，指向
+    `modeling_sheetsage2.py:149`，读的人根本不知道发生了什么、更不知道该改什么。
+    """
+    try:
+        import transformers
+    except ImportError:
+        return (
+            "需要重新推理 SheetSage2，但当前解释器没有 transformers。\n"
+            "  自带标签只覆盖 blessing / collapse / yoake / victim 四首；\n"
+            "  换曲子就必须让这一步真的跑起来，而它需要 transformers 4.45。\n"
+            "  可行做法见 README 的「已知缺陷 & 路线图」。"
+        )
+
+    major = int(str(transformers.__version__).split(".")[0])
+    if major >= SHEETSAGE2_MAX_TRANSFORMERS:
+        return (
+            f"SheetSage2 无法在当前解释器上加载：\n"
+            f"    本包 transformers = {transformers.__version__}，"
+            f"而 SheetSage2 的远程代码需要 4.45。\n"
+            f"    5.x 删掉了它依赖的 `BartDecoder(..., embed_tokens=...)`，\n"
+            f"    加载时会直接 `TypeError: BartDecoder.__init__() got an unexpected\n"
+            f"    keyword argument 'embed_tokens'`。\n"
+            "\n"
+            "  **这不是你的操作问题，是这个整合包的已知缺陷。**\n"
+            "  自带标签只覆盖四首样例（blessing / collapse / yoake / victim），\n"
+            "  所以那四首能跑；换曲子就会走到这里。\n"
+            "\n"
+            "  三条出路（按推荐顺序）：\n"
+            "    1) 自己准备 5 个标签文件放进 work\\sheetsage2\\<曲名>\\：\n"
+            "       beat.lab  downbeat.lab  key.lab  chord.lab  melody_vocal.mid\n"
+            "       格式说明见 README；拍点可以用 librosa 顶（work\\_pragmatism_labels.py\n"
+            "       是现成例子，但用转谱最高音冒充旋律会让大部分音符被当串音删掉）。\n"
+            "    2) 只跑下游：把已有的 work\\transkun\\<曲名>.mid 配上标签，\n"
+            "       然后 run.bat <曲名> --from arrange —— 不需要 GPU，也不碰模型。\n"
+            "    3) 在装了 transformers 4.45 的独立环境里单独跑这一步。"
+        )
+
+    bundled = HERE / "models" / "hf" / "hub"
+    if not bundled.is_dir() and not os.environ.get("HF_HOME"):
+        return (
+            "找不到 SheetSage2 的模型缓存：\n"
+            f"    {bundled} 不存在，环境里也没有 HF_HOME。\n"
+            "  要么用整合包（自带 models/hf），要么先联网拉一次模型。"
+        )
+    return None
+
+
 def stage_sheetsage2(song: str, work: Path, *, force: bool, render: bool) -> Path:
     """取 SheetSage2 的标签（beat / downbeat / key / chord / melody_vocal）。
 
-    精简版**自带四首的标签**，所以默认直接吃现成的。要重新推理需要
-    `transformers`（项目里是独立的 `.venv-ss2`，与主管线分开，避免版本冲突），
-    因此只有在标签缺失或显式 `--force` 时才真的去调模型。
+    整合包**自带四首样例的标签**，所以那四首走"直接吃现成的"这条快路。
+    **换新曲子时没有现成标签，会真的去推理** —— 而这一步对解释器有要求，
+    见下面 `_sheetsage2_preflight()` 的说明。
     """
     labels = work / "sheetsage2" / song
     needed = ["beat.lab", "downbeat.lab", "key.lab", "chord.lab", "melody_vocal.mid"]
@@ -254,34 +312,37 @@ def stage_sheetsage2(song: str, work: Path, *, force: bool, render: bool) -> Pat
         print(f"    自带标签齐备（{', '.join(needed)}），跳过推理")
         return labels
 
-    try:
-        import transformers  # noqa: F401
-    except ImportError as exc:
-        raise RuntimeError(
-            "需要重新推理 SheetSage2，但当前解释器没有 transformers。\n"
-            "  项目里这一步用的是独立环境 .venv-ss2。两种办法：\n"
-            "    1) 用自带标签：删除 --force 即可（data/sheetsage2/ 下已备好四首）\n"
-            "    2) 装依赖：pip install transformers torch\n"
-            f"  原始错误：{exc}"
-        ) from exc
-
     audio = work / "audio" / f"{song}.mp3"
+    if not audio.is_file():
+        raise RuntimeError(
+            f"没有 {audio}，无法推理 SheetSage2 标签。\n"
+            f"  把音频放到 {audio.parent}\\<曲名>.mp3，或先用已有音频跑一首自带的曲子。"
+        )
+
+    problem = _sheetsage2_preflight()
+    if problem:
+        raise RuntimeError(problem)
+
     labels.mkdir(parents=True, exist_ok=True)
-    print("    调用 SheetSage2（首次会从 HuggingFace 拉模型）…", flush=True)
+    print("    调用 SheetSage2 …", flush=True)
     cmd = [sys.executable, str(HERE / "pipeline" / "run_sheetsage2.py"), song]
     env = dict(os.environ)
-    env.setdefault("HF_HOME", str(HERE / "hf_home"))
-    env.setdefault("HF_HUB_DISABLE_SYMLINKS_WARNING", "1")
-    env.setdefault("HF_HUB_DISABLE_TELEMETRY", "1")
     env["PIPELINE_AUDIO"] = str(audio)
+    # 标签必须落到管线读的位置，否则一会又要在"产出不全"上打转。
+    env["E2S_LABEL_DIR"] = str(work / "sheetsage2")
     result = subprocess.run(cmd, capture_output=True, text=True, env=env, cwd=str(HERE))
-    print((result.stdout or "").strip()[-2000:])
-    if result.returncode != 0:
-        tail = (result.stderr or "").strip().splitlines()[-8:]
-        raise RuntimeError("SheetSage2 失败：\n" + "\n".join(tail))
+    tail = (result.stdout or "").strip().splitlines()[-12:]
+    print("\n".join(f"    {line}" for line in tail))
+
     missing = [name for name in needed if not (labels / name).is_file()]
-    if missing:
-        raise RuntimeError(f"SheetSage2 产出不全，缺 {missing}")
+    if result.returncode != 0 or missing:
+        detail = (result.stderr or "").strip().splitlines()[-6:]
+        raise RuntimeError(
+            "SheetSage2 没有产出标签（exit="
+            f"{result.returncode}，缺 {missing or '无'}）。\n"
+            "  子进程末尾输出：\n    " + "\n    ".join(tail)
+            + ("\n  子进程 stderr：\n    " + "\n    ".join(detail) if detail else "")
+        )
     return labels
 
 
