@@ -1,0 +1,62 @@
+{
+  "song": "Äventyr",
+  "ticks_per_beat": 12,
+  "time_signature": "4/4",
+  "bars": 120,
+  "tempo_bpm": 130.43,
+  "first_beat_seconds": 0.01,
+  "phase": 0,
+  "arrangement_source": "out/_arrangements/Äventyr.txt",
+  "right_notes": 1962,
+  "left_notes": 941,
+  "measures": 120,
+  "ties": 0,
+  "measure_clamp": {
+    "rebuilt_measures": 235,
+    "trimmed": 30,
+    "dropped": 0,
+    "leading_rests": 3,
+    "pickup_marked_implicit": 0
+  },
+  "duration_regularize": {
+    "regularized": 2521,
+    "bars_touched": 235
+  },
+  "duration_normalize": {
+    "snapped": 13,
+    "merged": 0,
+    "dropped": 0
+  },
+  "tempo_fix": {
+    "placed": 2,
+    "removed": 2,
+    "bpm": 130.4
+  },
+  "quantizer": {
+    "kind": "dual_lattice",
+    "cost_normalization": "density",
+    "switch_margin": 0.01,
+    "snap_policy": "family",
+    "piano": {
+      "lattice": "mixed",
+      "merged": 841,
+      "duple_share": 0.286,
+      "max_shift_ticks": 1.448
+    },
+    "melody": {
+      "lattice": "duple",
+      "merged": 0,
+      "duple_share": 1.0,
+      "max_shift_ticks": 0.006
+    }
+  },
+  "warnings": [
+    "强拍间距不均匀（{4: 119, 5: 1}）：取众数 4 拍/小节",
+    "4 onset(s) have more than 5 notes sounding at once",
+    "2 right-hand onset(s) reach below middle C"
+  ],
+  "written": {
+    "musicxml": "out/Äventyr/Äventyr.musicxml",
+    "midi": "out/Äventyr/Äventyr.mid"
+  }
+}

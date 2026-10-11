@@ -95,15 +95,24 @@ F 小调 2/4，右手三连音十六分，左手伴奏。可以看到成品仍�
 拷到别的机器上**不需要网络、不需要装任何东西**。
 
 ```
-整合包  下载约 8 GB
-├─ python/         自带解释器（约 6.4 GB，含 torch 2.6.0+cu124）
-├─ models/         模型权重 570 MB（SheetSage2 + demucs，附 SHA-256 清单）
-├─ data/           四首输入 362 MB（MP3 + 分轨 + 转谱 MIDI + SheetSage2 标签）
-├─ work/           工作区 530 MB（seed_work.py 从 data/ 铺出来）
-└─ out/            成品
+整合包  解压后约 16.6 GB
+├─ python/         6.4 GB   自带解释器（含 torch 2.6.0+cu124）
+├─ models/         7.8 GB   模型权重
+│                            ├─ SheetSage2 adapter 218 MB
+│                            ├─ MERT-v2-FullSong 父模型 2.4 GB ×2（见下方说明）
+│                            └─ demucs 两个权重（附 SHA-256 清单）
+├─ venv-ss2/         77 MB  SheetSage2 专用解释器（transformers 4.45，与主管线隔离）
+├─ data/            362 MB  四首输入（MP3 + 分轨 + 转谱 MIDI + SheetSage2 标签）
+├─ work/            2.4 GB  工作区（seed_work.py 从 data/ 铺出来）
+└─ out/              10 MB  成品
 ```
 
-> **下载**：[夸克网盘](https://pan.quark.cn/s/3bef4e0fd86c?pwd=Wuqn) 　提取码：`Wuqn`
+> **关于体积**：`models/` 里的 MERT-v2 权重存了**两份**（`7001f765` 与
+> `d8ba1c74` 两个 snapshot，SHA-256 相同，各 2.4 GB）——`refs/main` 指向前者、
+> `config.base_model_revision` 指向后者，删哪个都可能加载失败，所以没动。
+> 压缩包里 zip 会去重，实际下载体积小于 16.6 GB。
+
+> **下载**：[夸克网盘](https://pan.quark.cn/s/b80c10ec901a?pwd=28c6) 　提取码：`28c6`
 >
 > 整合包根目录下有一份 `先读我.txt`，解压后先看它——里面写了**不要用
 > `python\Scripts\*.exe`** 这条关键前提，以及出问题时该跑哪个诊断脚本。

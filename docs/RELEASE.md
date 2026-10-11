@@ -14,9 +14,10 @@
 | `out/**/*.{musicxml,mid,pdf}`、`engrave.json`、`report.json` | ≈ 5 MB | ✅ 跟踪 | 四首成品样例，别人不出谱就能看效果 |
 | `out/**/arrangement.txt`、`*.melody.json` | ≈ 250 KB | ❌ 忽略 | 工作中间产物，可由 `--from arrange` 重新生成 |
 | `python/` | 6.4 GB | ❌ 忽略 | 第三方解释器与依赖，走网盘 |
-| `models/` | 570 MB | ❌ 忽略 | 模型权重（其中一个还是非商业许可），走网盘 |
+| `venv-ss2/` | 77 MB | ❌ 忽略 | SheetSage2 专用解释器（transformers 4.45），同为第三方环境 |
+| `models/` | 7.8 GB | ❌ 忽略 | 模型权重（含 MERT-v2 父模型，其中一个还是非商业许可），走网盘 |
 | `data/` | 362 MB | ❌ 忽略 | 输入音频与中间产物，走网盘 |
-| `work/` | 530 MB | ❌ 忽略 | 工作区，`seed_work.py` 可从 `data/` 重建 |
+| `work/` | 2.4 GB | ❌ 忽略 | 工作区，`seed_work.py` 可从 `data/` 重建 |
 | `_out_shape_check.txt` 等运行报告 | 小 | ❌ 忽略 | 每次跑都会变 |
 
 **总跟踪体积约 5 MB / 104 个文件**，克隆很快。
@@ -25,12 +26,12 @@
 > ```bash
 > git lfs track "*.wav" "*.safetensors" "*.th" "*.dll" "*.pt"
 > ```
-> 但免费账户的 LFS 配额（1 GB 存储 / 1 GB 月流量）放不下这 8 GB，
+> 但免费账户的 LFS 配额（1 GB 存储 / 1 GB 月流量）放不下这 16 GB，
 > 网盘才是对的方案。
 
 > **关于 GitHub Release 能不能放整合包**：单文件上限是 2 GiB，整合包里最大的
 > 单文件是 913 MB（`torch_cuda.dll`），所以**技术上拆成分卷可以传**。但不建议：
-> Release 是用来分发软件版本的，把 8 GB 训练环境镜像流量挂上去，既容易触到
+> Release 是用来分发软件版本的，把 16 GB 训练环境镜像流量挂上去，既容易触到
 > 合理使用政策，也让仓库变成一个不好维护的存储桶。Release 的正文里放网盘
 > 链接即可。
 
