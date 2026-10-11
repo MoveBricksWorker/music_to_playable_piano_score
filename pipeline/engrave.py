@@ -838,8 +838,19 @@ def build_score_exact(arrangement, material, *, title: str | None = None):
         tail += bar_length - pickup
     limit = max(highest + bar_length, tail)
     spans: list[tuple[Fraction, Fraction]] = []
+
+    # 弱起小节**只在真的有音落在里面时**才建。
+    #
+    # `phase > 0` 只说明"第一个强拍之前还有几拍"，不保证那段里真有音符。
+    # 实测某首曲子的 `phase = 1`，但第一个音的坐标是 `2`（刚好等于
+    # `bar_length - pickup`），于是 `[0, 2)` 这个弱起小节**一个音都没有**，
+    # 白白占了第 1 小节的位置，让后面所有小节号整体后移 1，还多造出 2 个小节
+    # （谱面 280 vs 编排声明 277）。
     if pickup:
-        spans.append((Fraction(0), bar_length - pickup))
+        pickup_span = (Fraction(0), bar_length - pickup)
+        if any(start < pickup_span[1] for hand_notes in notes.values()
+               for start, _e, _p in hand_notes):
+            spans.append(pickup_span)
     cursor = spans[-1][1] if spans else Fraction(0)
     while cursor < limit:
         spans.append((cursor, cursor + bar_length))
