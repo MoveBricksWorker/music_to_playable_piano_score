@@ -307,75 +307,6 @@ SheetSage2 是 lead-sheet 模型，旋律头是**每个十六分音符一个类�
 | collapse | F minor | −4 | 629 → **532** |
 | blessing | E minor | +1 | 256 → 256 |
 
-### 🔴 第 ④ 阶段对**新曲子**不可用（自带标签只覆盖四首样例）
-
-`data/sheetsage2/` 里预置了 blessing / collapse / yoake / victim 四首的标签，
-所以那四首的第 ④ 阶段走"直接吃现成的"快路，**从不真正加载 SheetSage2**。
-换任何别的曲子，标签缺失，就会真的去推理——然后撞上两件事：
-
-**一、模型在这个解释器上加载不了。** 包内 `transformers` 是 5.6.1，而 SheetSage2
-的远程代码是照着 4.45 写的。已知 4 处 API 漂移，第一处就致命：
-
-```python
-# models/hf/.../modeling_sheetsage2.py:149
-self.decoder = BartDecoder(dc, embed_tokens=self.token_embedding)
-# 5.x: BartDecoder.__init__(self, config) —— 没有 embed_tokens 这个参数
-```
-
-```
-TypeError: BartDecoder.__init__() got an unexpected keyword argument 'embed_tokens'
-```
-
-另外三处：`_tied_weights_keys` 从 `list` 变成 `dict`；`tie_weights()` 多了
-`recompute_mapping` / `missing_keys` 两个参数；它自己的 `from_pretrained` 覆写
-要求"零缺失键"，而 5.x 会把被别名掉的绑定权重报成缺失。
-
-原项目用独立的 `.venv-ss2`（transformers 4.45）隔离这件事，**精简版没有这个环境**。
-
-**二、`pipeline/run_sheetsage2.py` 原来是写死四首的。** 它遍历一张硬编码的
-`TRACKS` 表，遇到表外的曲名直接 `continue`，循环体一次都不执行，然后 `return 0`
-——**什么都没干，却报成功**。真正发现问题的是 `run_pipeline` 事后那句"产出不全"，
-指向的是错误的方向。此外它的输出目录还和管线读的位置不一致。
-
-这两条都已修（脚本支持任意曲名、输出到正确位置、失败返回非零、报错分成人话），
-**但第一条修不了**——除非改 `models/` 缓存里的那份代码，且必须先验证权重绑定方向
-（写反了模型照样能加载、照样吐音符，但输出全是垃圾）。
-
-在修好之前，给新曲子出谱的办法是**自己准备标签**。现在有一条半自动的路：
-
-```bash
-python -m pipeline.make_labels <曲名>
-```
-
-它用包里**已经装好、能离线跑**的组件替代 SheetSage2：
-
-| 标签 | 替代来源 |
-|---|---|
-| `beat.lab` / `downbeat.lab` | `beat_this`（`ensemble2score` 的神经网络拍点后端），失败回退 librosa |
-| `key.lab` | chroma + Krumhansl 模板 |
-| `melody_vocal.mid` | `basic_pitch` 对 **Demucs 的 vocals 分轨**做转谱 |
-
-**关键是最后一条**：旋律必须来自**独立声源**。管线里有一条硬规则——"与旋律同刻
-同音高的钢琴音当人声串音删掉"。如果拿**转谱自己的最高音**冒充旋律，那条规则会把
-大部分钢琴音删掉（实测某首电子乐 912 个音删掉 645 个，即 **71%**），而且被保护的音
-会让可弹性修正失效。用真正的 vocals 分轨就不会：实测新曲子只删掉 25 个（真串音）。
-
-没有人声的曲子用 `--no-melody`（编排层就不锁右手最高音）。
-
-原始的标签格式如下，你也可以完全手写：
-
-```
-beat.lab          每行一个拍点时间（秒）
-downbeat.lab      每行一个强拍时间（秒）
-key.lab           每行 "起始秒 <TAB> 结束秒 <TAB> 调名"，如 0.01  149.74  F:minor
-chord.lab         调号/和弦标签（管线只做存在性检查）
-melody_vocal.mid  人声旋律（单音 MIDI）
-chords.mid        和弦素材 MIDI（空文件也可以，但必须存在）
-```
-
-> 这次是作者自己踩的：改了 `run_sheetsage2.py` 却从没运行过它，
-> 直到有人拿新曲子试跑才炸出来。
-
 ### 🔴 弱起相位曾让整首曲子的音符错位（已修）
 
 `grid.phase > 0` 只说明"第一个强拍之前还有几拍"，**不保证那几拍里真有音符**。
@@ -397,6 +328,56 @@ chords.mid        和弦素材 MIDI（空文件也可以，但必须存在）
 ```
 调号 +3（F# 小调）    小节 277 对 277    丢失起音 0    坏小节 0
 ```
+
+### ✅ 第 ④ 阶段曾经对新曲子不可用（已修）
+
+**症状**：自带标签只覆盖 blessing / collapse / yoake / victim 四首，换任何别的曲子
+都会在第 ④ 阶段失败，报一堆指向 `transformers` 内部的东西。
+
+**根因**：SheetSage2 的远程代码写于 `transformers 4.45`，而主管线用的是 **5.6.1**
+（5.x 删掉了它依赖的 `BartDecoder(..., embed_tokens=...)`）。**两者不能共用一个环境。**
+
+这不是无解的——**原始项目早就用"独立环境 + shell out"解决了**
+（`scripts/sheetsage2_stem.py` 的模块说明写得很清楚）。**是精简整合包时把三样东西丢了**：
+
+| 丢的 | 原始项目 | 后果 |
+|---|---|---|
+| `venv-ss2/`（77 MB，自带 transformers 4.45.2） | 有 | 没有能 import SheetSage2 的解释器 |
+| `MERT-v2-FullSong` 父模型（2.4 GB） | 有 | SheetSage2 只是 218 MB 的 adapter，缺编码器必然加载失败 |
+| 父模型的代码模块 `modules/.../m-a-p/MERT-v2-FullSong/` | 有 | `trust_remote_code` 从那里加载 `configuration_mert2.py` |
+
+**特别容易误判的一点**：`make_portable.py` 的注释写着"没有搬 MERT-v2：本管线不 import 它"。
+SheetSage2 确实不 `import` 它，**但它是父模型，推理时必须加载**。把"没被 import"当成
+"不需要"，就是这次丢文件的直接原因。
+
+**修法**（已在精简版里落地）：
+
+1. `venv-ss2/` 拷进包，`pyvenv.cfg` 的 `home` 改指包内 `python/`——**只有 77 MB，
+   而且自洽**：它自带 transformers/tokenizers，torch 复用包内那份，不依赖外部安装。
+2. 补齐父模型的 `model.safetensors`（SHA-256 必须等于 config 里的
+   `base_model_sha256`），以及 `modules/` 下那份代码。
+3. [run_pipeline.py](run_pipeline.py) 的第 ④ 阶段改走 `venv-ss2` +
+   [pipeline/ss2_worker.py](pipeline/ss2_worker.py)；`_sheetsage2_preflight()` 会逐个检查
+   上面三样，缺哪个就直接说清楚，而不是抛 `transformers` 的 `TypeError`。
+
+**实测**（随机挑的一首肖邦练习曲，Pollini 演奏，全程 2.0 分钟）：
+
+```
+[ss2] 模型加载 9.6s（cuda）    推理 27.9s    512 个事件    471 个旋律音
+调号判为 E minor —— 这首 Op.25 No.5 正是 E 小调 ✅
+可弹性：宽和弦 0 / 拥挤起音 0 / 最大跨度 19    >>> 全部达标
+结构：坏小节 0   丢失起音 0
+```
+
+### ⚠️ 器乐曲的旋律来源（顺带修的）
+
+独奏器乐曲上 SheetSage2 的 `melody_vocal.mid` 是空壳，模型把旋律写在
+`melody_instrumental.mid` 里。此时**不能再做"串音删除"**——那条规则的判据是
+"与旋律同刻同音高的钢琴音 = 人声串到钢琴轨"，只在旋律是**分离出来的人声**时成立。
+独奏曲里旋律与钢琴本就是同一条演奏，删掉就是删真音符（实测肖邦练习曲上删掉 272 个，占 12%）。
+
+`ss2_worker.py` 会写下 `.melody_source` 记录旋律来源，编排层据此决定是否删串音。
+四首样例没有这个文件，行为**完全不变**（回归闸门 28 条断言仍全过）。
 
 ### 🟠 临时记号仍然偏多（下一个该修的）
 

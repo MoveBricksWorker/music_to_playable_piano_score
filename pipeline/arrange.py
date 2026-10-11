@@ -144,6 +144,17 @@ def build_arrangement(
     )
     melody_events, melody_stats = quantize_notes(melody, "旋律（melody_vocal）")
 
+    # 旋律是**独立人声**还是**这件乐器自己**？
+    #
+    # `dedupe_piano` 的判据是"与旋律同刻同音高的钢琴音 = 人声串到钢琴轨上了"。
+    # 这条只在旋律是**分离出来的人声**时成立。独奏器乐曲里旋律与钢琴本就是同一条
+    # 演奏，删掉就是删真音符 —— 实测肖邦练习曲上会删掉 272 个音（占 12%）。
+    # 判据文件由 `pipeline/ss2_worker.py` 写下。
+    source = sheetsage2_dir / ".melody_source"
+    melody_is_separate_voice = True
+    if source.is_file():
+        melody_is_separate_voice = source.read_text(encoding="utf-8").strip() == "melody_vocal.mid"
+
     right: dict[int, set[int]] = {}
     left: dict[int, set[int]] = {}
     melody_ticks: dict[int, int] = {}
@@ -152,10 +163,17 @@ def build_arrangement(
             right.setdefault(tick, set()).add(pitch)
         melody_ticks[tick] = max(pitches)
 
-    dropped_dupes = dedupe_piano(piano, right)
-    if dropped_dupes:
+    dropped_dupes = 0
+    if melody_is_separate_voice:
+        dropped_dupes = dedupe_piano(piano, right)
+        if dropped_dupes:
+            warnings.append(
+                f"{dropped_dupes} 个 Transkun 音与旋律同刻同音高（钢琴轨的人声串音），已删除"
+            )
+    elif melody_events:
         warnings.append(
-            f"{dropped_dupes} 个 Transkun 音与旋律同刻同音高（钢琴轨的人声串音），已删除"
+            "旋律来自这件乐器本身（器乐曲）：跳过串音删除，"
+            "否则会把真实音符当人声串音删掉"
         )
 
     for tick, pitches in piano.items():
